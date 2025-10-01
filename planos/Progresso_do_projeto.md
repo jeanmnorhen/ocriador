@@ -12,5 +12,5 @@
 
 **Fase 3: Renderização Interativa (Pixel.js / React)**
 - [x] **3.1 Inicialização do Canvas:** Biblioteca `pixi.js` instalada. Criado o componente `<AnimationEditor />` que inicializa o canvas do PixiJS. A página principal foi configurada como uma rota protegida que renderiza o editor.
-- [ ] **3.2 Carregamento de Elementos:** (Próximo passo)
+- [x] **3.2 Carregamento de Elementos:** Refatorada a UI para um dashboard de projetos e uma página de editor dinâmica. Implementado painel para criação de personagens com `sprite_url`. Editor agora carrega e exibe os sprites dos personagens no palco.
 - [ ] **3.3 Interação (UC004):** (Próximo passo)
