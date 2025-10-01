@@ -68,21 +68,82 @@ export async function saveKeyframe(
 }
 
 export async function processScript(projectId: string, script: string) {
-  // TODO: Call Gemini API here
-  console.log(`Processing script for project ${projectId}: ${script}`);
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!); // Initialize Gemini
 
-  // For now, just return a dummy response
-  return {
-    success: true,
-    message: "Script processed (dummy response)",
-    suggestedKeyframes: [
-      // Example: a character at a specific position
-      {
-        elemento_id: "some-character-id", // This would come from Gemini's analysis
-        tipo: "personagem",
-        tempo_frame: 0,
-        dados_pose: { x: 100, y: 200, rotation: 0 },
-      },
-    ],
-  };
-}
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // Use gemini-pro model
+
+  const prompt = `Analyze the following animation script and suggest initial positions (x, y, rotation) for characters at frame 0.
+  
+  Script: "${script}"
+  
+  Provide the output as a JSON array of objects, where each object has:
+  - elemento_id: The ID of the character (string). This ID must match an existing character ID in the project.
+  - tipo: "personagem" (string).
+  - tempo_frame: 0 (number).
+  - dados_pose: { x: number, y: number, rotation: number } (object).
+  
+  Example output:
+  [
+    { "elemento_id": "character-id-1", "tipo": "personagem", "tempo_frame": 0, "dados_pose": { "x": 100, "y": 200, "rotation": 0 } },
+    { "elemento_id": "character-id-2", "tipo": "personagem", "tempo_frame": 0, "dados_pose": { "x": 300, "y": 150, "rotation": 15 } }
+  ]
+  If no characters are mentioned or positions can't be inferred, return an empty array.`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Attempt to parse the JSON output from Gemini
+    let suggestedKeyframes: any[] = [];
+    try {
+      suggestedKeyframes = JSON.parse(text);
+      // Basic validation
+      if (!Array.isArray(suggestedKeyframes)) {
+        throw new Error("Gemini response is not an array.");
+      }
+      suggestedKeyframes = suggestedKeyframes.filter(kf => 
+        kf.elemento_id && kf.tipo === "personagem" && kf.tempo_frame === 0 && kf.dados_pose
+      );
+    } catch (parseError) {
+      console.error("Error parsing Gemini response:", parseError);
+      console.log("Gemini raw response:", text);
+      return { success: false, error: "Failed to parse Gemini's suggested keyframes." };
+    }
+
+    // Save these suggested keyframes to the database
+    for (const kf of suggestedKeyframes) {
+      // Ensure the element_id exists in the project's characters
+      // This is a basic check, more robust validation might be needed
+      const { data: character } = await supabase
+        .from('personagens')
+        .select('id')
+        .eq('id', kf.elemento_id)
+        .eq('projeto_id', projectId)
+        .single();
+
+      if (character) {
+        await saveKeyframe(
+          projectId,
+          kf.elemento_id,
+          kf.tipo, // 'personagem' or 'objeto'
+          kf.tempo_frame,
+          kf.dados_pose
+        );
+      } else {
+        console.warn(`Suggested keyframe for unknown character ID: ${kf.elemento_id}`);
+      }
+    }
+
+    revalidatePath(`/editor/${projectId}`); // Revalidate to show new keyframes
+
+    return {
+      success: true,
+      message: "Roteiro processado com sucesso pelo Gemini e keyframes salvos.",
+      suggestedKeyframes: suggestedKeyframes,
+    };
+
+  } catch (error) {
+    console.error("Error calling Gemini API:", error);
+    return { success: false, error: "Erro ao comunicar com a API do Gemini." };
+  }
