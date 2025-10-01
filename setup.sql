@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS personagens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  projeto_id UUID NOT NULL REFERENCES projetos(id) ON DELETE CASCADE,
   nome TEXT NOT NULL,
   sprite_id_cabeca TEXT,
   sprite_id_tronco TEXT,
@@ -47,9 +48,11 @@ CREATE TABLE IF NOT EXISTS personagens (
   sprite_id_braco_dir TEXT,
   sprite_id_perna_esq TEXT,
   sprite_id_perna_dir TEXT,
-  pontos_pivo JSONB -- Armazena todos os pontos de pivô em um único JSON
+  pontos_pivo JSONB, -- Armazena todos os pontos de pivô em um único JSON
+  sprite_url TEXT
 );
 COMMENT ON TABLE personagens IS 'Modelos de personagens, suas partes e pontos de pivô.';
+CREATE INDEX IF NOT EXISTS idx_personagens_projeto ON personagens(projeto_id);
 
 -- 4. Tabela de Objetos
 -- Define objetos genéricos que podem ser usados na cena.
@@ -119,18 +122,18 @@ CREATE POLICY "Usuários podem deletar seus próprios palcos."
   USING (auth.uid() = user_id);
 
 -- Políticas para a tabela 'personagens'
-CREATE POLICY "Usuários podem criar seus próprios personagens."
+CREATE POLICY "Usuários podem criar personagens para seus projetos."
   ON personagens FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Usuários podem ver seus próprios personagens."
+  WITH CHECK (auth.uid() = (SELECT user_id FROM projetos WHERE id = projeto_id));
+CREATE POLICY "Usuários podem ver personagens de seus projetos."
   ON personagens FOR SELECT
-  USING (auth.uid() = user_id);
-CREATE POLICY "Usuários podem atualizar seus próprios personagens."
+  USING (auth.uid() = (SELECT user_id FROM projetos WHERE id = projeto_id));
+CREATE POLICY "Usuários podem atualizar personagens de seus projetos."
   ON personagens FOR UPDATE
-  USING (auth.uid() = user_id);
-CREATE POLICY "Usuários podem deletar seus próprios personagens."
+  USING (auth.uid() = (SELECT user_id FROM projetos WHERE id = projeto_id));
+CREATE POLICY "Usuários podem deletar personagens de seus projetos."
   ON personagens FOR DELETE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = (SELECT user_id FROM projetos WHERE id = projeto_id));
 
 -- Políticas para a tabela 'objetos'
 CREATE POLICY "Usuários podem criar seus próprios objetos."

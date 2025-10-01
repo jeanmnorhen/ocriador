@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import AnimationEditor from '@/components/AnimationEditor'
+import CharacterPanel from '@/components/CharacterPanel' // Import the new panel
 
 type EditorPageProps = {
   params: {
@@ -17,32 +18,40 @@ export default async function EditorPage({ params }: EditorPageProps) {
     redirect('/login')
   }
 
-  // Fetch the project from the database
-  const { data: project, error } = await supabase
+  // Fetch the project
+  const { data: project, error: projectError } = await supabase
     .from('projetos')
     .select('id, nome, user_id')
     .eq('id', projectId)
     .single()
 
-  // If project not found or user does not have access, redirect
-  if (error || !project || project.user_id !== user.id) {
-    console.error('Error fetching project or unauthorized access:', error)
-    redirect('/') // Redirect to dashboard
+  if (projectError || !project || project.user_id !== user.id) {
+    redirect('/')
   }
 
-  // TODO: Fetch characters, objects, and keyframes for this project
-  // const { data: characters } = await supabase.from('personagens')...
-  
+  // Fetch characters for the project
+  const { data: characters, error: charactersError } = await supabase
+    .from('personagens')
+    .select('id, nome')
+    .eq('projeto_id', projectId)
+
+  // The page can still render even if characters fail to load
+  if (charactersError) {
+    console.error("Error fetching characters:", charactersError);
+  }
+
   return (
-    <div>
-      <header style={{ padding: '1rem', background: '#222', color: 'white' }}>
-        <h1>Editor: {project.nome}</h1>
-        {/* We can add a back button or other controls here */}
-      </header>
-      <main>
-        {/* Pass project data to the editor */}
-        <AnimationEditor project={project} />
-      </main>
+    <div style={{ display: 'flex', height: '100vh', background: '#111' }}>
+      <CharacterPanel projectId={project.id} characters={characters || []} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <header style={{ padding: '1rem', background: '#222', color: 'white' }}>
+          <h1>Editor: {project.nome}</h1>
+        </header>
+        <main style={{ flex: 1, position: 'relative' }}>
+          {/* The editor will now need to handle its own size */}
+          <AnimationEditor project={project} characters={characters || []} />
+        </main>
+      </div>
     </div>
   )
 }

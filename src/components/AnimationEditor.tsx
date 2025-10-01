@@ -3,14 +3,24 @@
 import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 
-// Define the type for the project prop, which will expand as we add more data
+// Define types for props
 type Project = {
   id: string;
   nome: string;
   user_id: string;
 };
 
-const AnimationEditor = ({ project }: { project: Project }) => {
+type Character = {
+  id: string;
+  nome: string;
+};
+
+type AnimationEditorProps = {
+  project: Project;
+  characters: Character[];
+};
+
+const AnimationEditor = ({ project, characters }: AnimationEditorProps) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,7 +60,7 @@ const AnimationEditor = ({ project }: { project: Project }) => {
     }
   }, []);
 
-  return <div ref={canvasRef} style={{ width: '100%', height: '100vh' }} />;
+  return <div ref={canvasRef} style={{ position: 'absolute', width: '100%', height: '100%' }} />;
 };
 
 export default AnimationEditor;
