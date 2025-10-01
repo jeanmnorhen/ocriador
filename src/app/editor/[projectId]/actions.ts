@@ -66,3 +66,23 @@ export async function saveKeyframe(
   revalidatePath(`/editor/${projectId}`)
   return { success: true }
 }
+
+export async function processScript(projectId: string, script: string) {
+  // TODO: Call Gemini API here
+  console.log(`Processing script for project ${projectId}: ${script}`);
+
+  // For now, just return a dummy response
+  return {
+    success: true,
+    message: "Script processed (dummy response)",
+    suggestedKeyframes: [
+      // Example: a character at a specific position
+      {
+        elemento_id: "some-character-id", // This would come from Gemini's analysis
+        tipo: "personagem",
+        tempo_frame: 0,
+        dados_pose: { x: 100, y: 200, rotation: 0 },
+      },
+    ],
+  };
+}

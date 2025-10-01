@@ -17,4 +17,4 @@
 
 **Fase 4: Persistência de Poses (UC005, UC006, UC009)**
 - [x] **4.1 Gravação de Keyframes:** Criada a `Server Action` `saveKeyframe`. Criado o componente `<Timeline />`. O editor foi refatorado para um componente de cliente (`EditorClient`) que orquestra a captura de posição dos sprites e o salvamento de keyframes.
-- [ ] **4.3 Leitura da Timeline:** (Próximo passo)
+- [x] **4.3 Leitura da Timeline:** A página do editor agora busca os keyframes do projeto. O editor usa keyframes para posicionar sprites inicialmente. O componente de timeline exibe os frames com keyframes salvos.

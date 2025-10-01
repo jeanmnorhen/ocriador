@@ -16,9 +16,18 @@ type Character = {
   sprite_url: string | null;
 };
 
+type Keyframe = {
+  id: string;
+  elemento_id: string;
+  tipo: 'personagem' | 'objeto';
+  tempo_frame: number;
+  dados_pose: { x: number; y: number; rotation: number };
+};
+
 type AnimationEditorProps = {
   project: Project;
   characters: Character[];
+  initialKeyframes: Keyframe[]; // Added this
 };
 
 // Define the type for the data we want to expose
@@ -35,13 +44,11 @@ export type AnimationEditorHandle = {
 };
 
 const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
-  ({ project, characters }, ref) => {
+  ({ project, characters, initialKeyframes }, ref) => { // Added initialKeyframes
     const canvasRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<PIXI.Application>();
-    // Use a ref to store sprites, mapping character ID to the PIXI.Sprite
     const spritesRef = useRef<Map<string, PIXI.Sprite>>(new Map());
 
-    // Expose the getSpritesData function to the parent component
     useImperativeHandle(ref, () => ({
       getSpritesData: () => {
         const data: SpriteData[] = [];
@@ -75,7 +82,6 @@ const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
         const app = appRef.current;
         if (!app) return;
 
-        // Clear old sprites before adding new ones
         spritesRef.current.clear();
         app.stage.removeChildren();
 
@@ -85,11 +91,25 @@ const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
             try {
               const texture = await PIXI.Assets.load(char.sprite_url);
               const sprite = new PIXI.Sprite(texture);
-              spritesRef.current.set(char.id, sprite); // Store sprite reference
+              spritesRef.current.set(char.id, sprite);
 
               sprite.anchor.set(0.5);
-              sprite.x = Math.random() * app.screen.width;
-              sprite.y = Math.random() * app.screen.height;
+
+              // Check for initial keyframe at frame 0
+              const initialPose = initialKeyframes.find(
+                (kf) => kf.elemento_id === char.id && kf.tempo_frame === 0
+              );
+
+              if (initialPose) {
+                sprite.x = initialPose.dados_pose.x;
+                sprite.y = initialPose.dados_pose.y;
+                sprite.rotation = initialPose.dados_pose.rotation;
+              } else {
+                // Fallback to random position if no initial keyframe
+                sprite.x = Math.random() * app.screen.width;
+                sprite.y = Math.random() * app.screen.height;
+                sprite.rotation = 0;
+              }
 
               sprite.eventMode = 'static';
               sprite.cursor = 'pointer';
@@ -121,11 +141,11 @@ const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
 
       return () => {
         if (appRef.current) {
-          appRef.current.destroy(false, true); // Keep canvas, remove textures
+          appRef.current.destroy(false, true);
           appRef.current = undefined;
         }
       };
-    }, [characters]);
+    }, [characters, initialKeyframes]); // Rerun effect if characters or keyframes change
 
     return <div ref={canvasRef} style={{ position: 'absolute', width: '100%', height: '100%' }} />;
   }
