@@ -18,3 +18,8 @@
 **Fase 4: Persistência de Poses (UC005, UC006, UC009)**
 - [x] **4.1 Gravação de Keyframes:** Criada a `Server Action` `saveKeyframe`. Criado o componente `<Timeline />`. O editor foi refatorado para um componente de cliente (`EditorClient`) que orquestra a captura de posição dos sprites e o salvamento de keyframes.
 - [x] **4.3 Leitura da Timeline:** A página do editor agora busca os keyframes do projeto. O editor usa keyframes para posicionar sprites inicialmente. O componente de timeline exibe os frames com keyframes salvos.
+
+**Fase 5: Integração Gemini e Animação**
+- [x] **5.1 Processar Roteiro (UC001):** Criada a `Server Action` `processScript` e adicionada UI para entrada de roteiro no `EditorClient`.
+- [ ] **5.2 Inicialização da Cena:** (Próximo passo)
+- [ ] **5.3 Reprodução (UC008):** (Próximo passo)
