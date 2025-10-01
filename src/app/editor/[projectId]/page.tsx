@@ -32,7 +32,7 @@ export default async function EditorPage({ params }: EditorPageProps) {
   // Fetch characters for the project
   const { data: characters, error: charactersError } = await supabase
     .from('personagens')
-    .select('id, nome')
+    .select('id, nome, sprite_url')
     .eq('projeto_id', projectId)
 
   // The page can still render even if characters fail to load
