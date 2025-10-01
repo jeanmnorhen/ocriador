@@ -47,9 +47,38 @@ const AnimationEditor = ({ project, characters }: AnimationEditorProps) => {
               const sprite = new PIXI.Sprite(texture);
 
               sprite.anchor.set(0.5);
-              // Position sprites randomly for now
               sprite.x = Math.random() * app.screen.width;
               sprite.y = Math.random() * app.screen.height;
+
+              // Make the sprite interactive
+              sprite.eventMode = 'static';
+              sprite.cursor = 'pointer';
+
+              // Drag and drop logic
+              let dragging = false;
+
+              sprite.on('pointerdown', () => {
+                dragging = true;
+                // Bring sprite to top
+                app.stage.toFront(sprite);
+              });
+
+              sprite.on('pointerup', () => {
+                dragging = false;
+              });
+
+              sprite.on('pointerupoutside', () => {
+                dragging = false;
+              });
+
+              sprite.on('pointermove', (event) => {
+                if (dragging) {
+                  // Get the new position from the event
+                  const newPosition = event.data.getLocalPosition(sprite.parent);
+                  sprite.x = newPosition.x;
+                  sprite.y = newPosition.y;
+                }
+              });
 
               app.stage.addChild(sprite);
             } catch (e) {
