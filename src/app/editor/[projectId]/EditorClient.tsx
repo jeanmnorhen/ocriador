@@ -1,10 +1,10 @@
 'use client'
 
-import { useRef, useState } from 'react'; // Added useState
+import { useRef, useState } from 'react';
 import AnimationEditor, { type AnimationEditorHandle, type SpriteData } from '@/components/AnimationEditor';
 import CharacterPanel from '@/components/CharacterPanel';
 import Timeline from '@/components/Timeline';
-import { saveKeyframe, processScript } from './actions'; // Added processScript
+import { saveKeyframe } from './actions';
 
 // These types can be moved to a shared types file later
 type Project = {
@@ -35,7 +35,8 @@ type EditorClientProps = {
 
 export default function EditorClient({ project, initialCharacters, initialKeyframes }: EditorClientProps) {
   const editorRef = useRef<AnimationEditorHandle>(null);
-  const [scriptInput, setScriptInput] = useState(''); // State for script input
+  const [scriptInput, setScriptInput] = useState('');
+  const [currentFrame, setCurrentFrame] = useState(0); // New state for current frame
 
   const handleSaveKeyframe = async (frame: number) => {
     if (!editorRef.current) return;
@@ -60,8 +61,6 @@ export default function EditorClient({ project, initialCharacters, initialKeyfra
     const result = await processScript(project.id, scriptInput);
     if (result.success) {
       alert(result.message);
-      // TODO: Handle suggestedKeyframes from Gemini
-      // For now, just log them
       console.log('Suggested Keyframes from Gemini:', result.suggestedKeyframes);
     } else {
       alert(`Erro ao processar roteiro: ${result.error}`);
@@ -72,7 +71,6 @@ export default function EditorClient({ project, initialCharacters, initialKeyfra
     <div style={{ display: 'flex', height: '100vh', background: '#111' }}>
       <div style={{ display: 'flex', flexDirection: 'column', width: '300px', borderRight: '1px solid #444' }}>
         <CharacterPanel projectId={project.id} characters={initialCharacters} />
-        {/* New Script Input Panel */}
         <div style={{ background: '#252526', color: 'white', padding: '1rem', marginTop: '1rem', flex: 1 }}>
           <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', borderBottom: '1px solid #444', paddingBottom: '0.5rem' }}>
             Roteiro Gemini
@@ -97,8 +95,8 @@ export default function EditorClient({ project, initialCharacters, initialKeyfra
           <h1>Editor: {project.nome}</h1>
         </header>
         <main style={{ flex: 1, position: 'relative' }}>
-          <AnimationEditor ref={editorRef} project={project} characters={initialCharacters} initialKeyframes={initialKeyframes} />
-          <Timeline onSaveKeyframe={handleSaveKeyframe} initialKeyframes={initialKeyframes} />
+          <AnimationEditor ref={editorRef} project={project} characters={initialCharacters} initialKeyframes={initialKeyframes} currentFrame={currentFrame} /> {/* Passed currentFrame */}
+          <Timeline onSaveKeyframe={handleSaveKeyframe} initialKeyframes={initialKeyframes} onFrameChange={setCurrentFrame} /> {/* Passed onFrameChange */}
         </main>
       </div>
     </div>

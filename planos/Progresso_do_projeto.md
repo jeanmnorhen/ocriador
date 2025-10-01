@@ -22,4 +22,4 @@
 **Fase 5: Integração Gemini e Animação**
 - [x] **5.1 Processar Roteiro (UC001):** Criada a `Server Action` `processScript` e adicionada UI para entrada de roteiro no `EditorClient`.
 - [x] **5.2 Inicialização da Cena:** Integrada a API do Gemini na `processScript` Server Action. A função agora analisa roteiros, gera keyframes sugeridos e os salva no banco de dados.
-- [ ] **5.3 Reprodução (UC008):** (Próximo passo)
+- [x] **5.3 Reprodução (UC008):** Implementada a lógica de interpolação de poses no `AnimationEditor` com base nos keyframes e no `currentFrame` da timeline. Controles de play/pause/stop adicionados à timeline.

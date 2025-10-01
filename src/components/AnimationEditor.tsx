@@ -27,7 +27,8 @@ type Keyframe = {
 type AnimationEditorProps = {
   project: Project;
   characters: Character[];
-  initialKeyframes: Keyframe[]; // Added this
+  initialKeyframes: Keyframe[];
+  currentFrame: number; // Added this
 };
 
 // Define the type for the data we want to expose
@@ -44,7 +45,7 @@ export type AnimationEditorHandle = {
 };
 
 const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
-  ({ project, characters, initialKeyframes }, ref) => { // Added initialKeyframes
+  ({ project, characters, initialKeyframes, currentFrame }, ref) => { // Added currentFrame
     const canvasRef = useRef<HTMLDivElement>(null);
     const appRef = useRef<PIXI.Application>();
     const spritesRef = useRef<Map<string, PIXI.Sprite>>(new Map());
@@ -82,58 +83,99 @@ const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
         const app = appRef.current;
         if (!app) return;
 
-        spritesRef.current.clear();
-        app.stage.removeChildren();
+        // Clear old sprites before adding new ones if characters change
+        // But keep sprites if only currentFrame changes
+        if (spritesRef.current.size === 0 || characters.length !== spritesRef.current.size) {
+            spritesRef.current.clear();
+            app.stage.removeChildren();
 
-        // Load character sprites
-        for (const char of characters) {
-          if (char.sprite_url) {
-            try {
-              const texture = await PIXI.Assets.load(char.sprite_url);
-              const sprite = new PIXI.Sprite(texture);
-              spritesRef.current.set(char.id, sprite);
+            // Load character sprites
+            for (const char of characters) {
+                if (char.sprite_url) {
+                    try {
+                        const texture = await PIXI.Assets.load(char.sprite_url);
+                        const sprite = new PIXI.Sprite(texture);
+                        spritesRef.current.set(char.id, sprite);
 
-              sprite.anchor.set(0.5);
+                        sprite.anchor.set(0.5);
 
-              // Check for initial keyframe at frame 0
-              const initialPose = initialKeyframes.find(
-                (kf) => kf.elemento_id === char.id && kf.tempo_frame === 0
-              );
+                        sprite.eventMode = 'static';
+                        sprite.cursor = 'pointer';
 
-              if (initialPose) {
-                sprite.x = initialPose.dados_pose.x;
-                sprite.y = initialPose.dados_pose.y;
-                sprite.rotation = initialPose.dados_pose.rotation;
-              } else {
-                // Fallback to random position if no initial keyframe
-                sprite.x = Math.random() * app.screen.width;
-                sprite.y = Math.random() * app.screen.height;
-                sprite.rotation = 0;
-              }
+                        let dragging = false;
+                        sprite.on('pointerdown', () => {
+                            dragging = true;
+                            app.stage.toFront(sprite);
+                        });
+                        sprite.on('pointerup', () => dragging = false);
+                        sprite.on('pointerupoutside', () => dragging = false);
+                        sprite.on('pointermove', (event) => {
+                            if (dragging) {
+                                const newPosition = event.data.getLocalPosition(sprite.parent);
+                                sprite.x = newPosition.x;
+                                sprite.y = newPosition.y;
+                            }
+                        });
 
-              sprite.eventMode = 'static';
-              sprite.cursor = 'pointer';
-
-              let dragging = false;
-              sprite.on('pointerdown', () => {
-                dragging = true;
-                app.stage.toFront(sprite);
-              });
-              sprite.on('pointerup', () => dragging = false);
-              sprite.on('pointerupoutside', () => dragging = false);
-              sprite.on('pointermove', (event) => {
-                if (dragging) {
-                  const newPosition = event.data.getLocalPosition(sprite.parent);
-                  sprite.x = newPosition.x;
-                  sprite.y = newPosition.y;
+                        app.stage.addChild(sprite);
+                    } catch (e) {
+                        console.error(`Error loading sprite for ${char.nome}:`, e);
+                    }
                 }
-              });
-
-              app.stage.addChild(sprite);
-            } catch (e) {
-              console.error(`Error loading sprite for ${char.nome}:`, e);
             }
-          }
+        }
+
+        // Apply pose based on currentFrame
+        for (const char of characters) {
+            const sprite = spritesRef.current.get(char.id);
+            if (!sprite) continue;
+
+            const characterKeyframes = initialKeyframes
+                .filter(kf => kf.elemento_id === char.id)
+                .sort((a, b) => a.tempo_frame - b.tempo_frame);
+
+            if (characterKeyframes.length === 0) {
+                // If no keyframes, set a default or random position (only once)
+                if (sprite.x === 0 && sprite.y === 0) { // Check if it's still at default 0,0
+                    sprite.x = Math.random() * app.screen.width;
+                    sprite.y = Math.random() * app.screen.height;
+                    sprite.rotation = 0;
+                }
+                continue;
+            }
+
+            // Find the two nearest keyframes
+            let kfBefore: Keyframe | undefined;
+            let kfAfter: Keyframe | undefined;
+
+            for (let i = 0; i < characterKeyframes.length; i++) {
+                if (characterKeyframes[i].tempo_frame <= currentFrame) {
+                    kfBefore = characterKeyframes[i];
+                }
+                if (characterKeyframes[i].tempo_frame >= currentFrame) {
+                    kfAfter = characterKeyframes[i];
+                    break;
+                }
+            }
+
+            if (!kfBefore && kfAfter) { // Before first keyframe, use first keyframe's pose
+                sprite.x = kfAfter.dados_pose.x;
+                sprite.y = kfAfter.dados_pose.y;
+                sprite.rotation = kfAfter.dados_pose.rotation;
+            } else if (kfBefore && !kfAfter) { // After last keyframe, use last keyframe's pose
+                sprite.x = kfBefore.dados_pose.x;
+                sprite.y = kfBefore.dados_pose.y;
+                sprite.rotation = kfBefore.dados_pose.rotation;
+            } else if (kfBefore && kfAfter && kfBefore.id !== kfAfter.id) { // Interpolate
+                const t = (currentFrame - kfBefore.tempo_frame) / (kfAfter.tempo_frame - kfBefore.tempo_frame);
+                sprite.x = kfBefore.dados_pose.x + (kfAfter.dados_pose.x - kfBefore.dados_pose.x) * t;
+                sprite.y = kfBefore.dados_pose.y + (kfAfter.dados_pose.y - kfBefore.dados_pose.y) * t;
+                sprite.rotation = kfBefore.dados_pose.rotation + (kfAfter.dados_pose.rotation - kfBefore.dados_pose.rotation) * t;
+            } else if (kfBefore && kfAfter && kfBefore.id === kfAfter.id) { // Exactly on a keyframe
+                sprite.x = kfBefore.dados_pose.x;
+                sprite.y = kfBefore.dados_pose.y;
+                sprite.rotation = kfBefore.dados_pose.rotation;
+            }
         }
       };
 
@@ -145,7 +187,7 @@ const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
           appRef.current = undefined;
         }
       };
-    }, [characters, initialKeyframes]); // Rerun effect if characters or keyframes change
+    }, [characters, initialKeyframes, currentFrame]); // Rerun effect if characters, keyframes, or currentFrame change
 
     return <div ref={canvasRef} style={{ position: 'absolute', width: '100%', height: '100%' }} />;
   }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Added useEffect
 
 type Keyframe = {
   id: string;
@@ -12,14 +12,50 @@ type Keyframe = {
 
 type TimelineProps = {
   onSaveKeyframe: (frame: number) => void;
-  initialKeyframes: Keyframe[]; // Added this
+  initialKeyframes: Keyframe[];
+  onFrameChange: (frame: number) => void; // New prop to notify parent of frame changes
 };
 
-export default function Timeline({ onSaveKeyframe, initialKeyframes }: TimelineProps) { // Added initialKeyframes
+export default function Timeline({ onSaveKeyframe, initialKeyframes, onFrameChange }: TimelineProps) {
   const [currentFrame, setCurrentFrame] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const maxFrame = Math.max(...initialKeyframes.map(kf => kf.tempo_frame), 0, 100); // Max frame in keyframes or a default
+
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const animate = () => {
+      if (isPlaying) {
+        setCurrentFrame((prevFrame) => {
+          const nextFrame = prevFrame + 1;
+          if (nextFrame > maxFrame) {
+            setIsPlaying(false); // Stop if end of timeline
+            return 0; // Reset to start
+          }
+          onFrameChange(nextFrame); // Notify parent
+          return nextFrame;
+        });
+      }
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [isPlaying, maxFrame, onFrameChange]);
 
   const handleSave = () => {
     onSaveKeyframe(currentFrame);
+  };
+
+  const handlePlayPause = () => {
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleStop = () => {
+    setIsPlaying(false);
+    setCurrentFrame(0);
+    onFrameChange(0); // Notify parent
   };
 
   // Get unique frame numbers that have keyframes
@@ -37,7 +73,7 @@ export default function Timeline({ onSaveKeyframe, initialKeyframes }: TimelineP
       borderTop: '1px solid #444',
       padding: '1rem',
       display: 'flex',
-      flexDirection: 'column', // Changed to column for better layout
+      flexDirection: 'column',
       gap: '0.5rem'
     }}>
       <h3 style={{ marginBottom: '0.5rem' }}>Timeline</h3>
@@ -47,7 +83,11 @@ export default function Timeline({ onSaveKeyframe, initialKeyframes }: TimelineP
           <input
             type="number"
             value={currentFrame}
-            onChange={(e) => setCurrentFrame(Number(e.target.value))}
+            onChange={(e) => {
+              const newFrame = Number(e.target.value);
+              setCurrentFrame(newFrame);
+              onFrameChange(newFrame); // Notify parent
+            }}
             style={{ width: '80px', background: '#333', color: 'white', border: '1px solid #555' }}
           />
         </div>
@@ -56,6 +96,18 @@ export default function Timeline({ onSaveKeyframe, initialKeyframes }: TimelineP
           style={{ background: 'blue', color: 'white', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer' }}
         >
           Salvar Keyframe
+        </button>
+        <button
+          onClick={handlePlayPause}
+          style={{ background: isPlaying ? 'orange' : 'green', color: 'white', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer' }}
+        >
+          {isPlaying ? 'Pause' : 'Play'}
+        </button>
+        <button
+          onClick={handleStop}
+          style={{ background: 'red', color: 'white', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer' }}
+        >
+          Stop
         </button>
       </div>
       
