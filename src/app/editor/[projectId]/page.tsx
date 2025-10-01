@@ -1,7 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
-import AnimationEditor from '@/components/AnimationEditor'
-import CharacterPanel from '@/components/CharacterPanel' // Import the new panel
+import EditorClient from './EditorClient' // Import the new client component
 
 type EditorPageProps = {
   params: {
@@ -35,23 +34,20 @@ export default async function EditorPage({ params }: EditorPageProps) {
     .select('id, nome, sprite_url')
     .eq('projeto_id', projectId)
 
-  // The page can still render even if characters fail to load
   if (charactersError) {
     console.error("Error fetching characters:", charactersError);
   }
 
-  return (
-    <div style={{ display: 'flex', height: '100vh', background: '#111' }}>
-      <CharacterPanel projectId={project.id} characters={characters || []} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <header style={{ padding: '1rem', background: '#222', color: 'white' }}>
-          <h1>Editor: {project.nome}</h1>
-        </header>
-        <main style={{ flex: 1, position: 'relative' }}>
-          {/* The editor will now need to handle its own size */}
-          <AnimationEditor project={project} characters={characters || []} />
-        </main>
-      </div>
-    </div>
-  )
+  // Fetch keyframes for the project
+  const { data: keyframes, error: keyframesError } = await supabase
+    .from('keyframes')
+    .select('id, elemento_id, tipo, tempo_frame, dados_pose')
+    .eq('projeto_id', projectId)
+    .order('tempo_frame', { ascending: true }); // Order by frame for easier processing
+
+  if (keyframesError) {
+    console.error("Error fetching keyframes:", keyframesError);
+  }
+
+  return <EditorClient project={project} initialCharacters={characters || []} initialKeyframes={keyframes || []} />;
 }

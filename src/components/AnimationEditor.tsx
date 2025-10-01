@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import * as PIXI from 'pixi.js';
 
 // Define types for props
@@ -21,23 +21,63 @@ type AnimationEditorProps = {
   characters: Character[];
 };
 
-const AnimationEditor = ({ project, characters }: AnimationEditorProps) => {
-  const canvasRef = useRef<HTMLDivElement>(null);
+// Define the type for the data we want to expose
+export type SpriteData = {
+  id: string;
+  x: number;
+  y: number;
+  rotation: number;
+};
 
-  useEffect(() => {
-    let app: PIXI.Application;
+// Define the type for the functions exposed by the ref
+export type AnimationEditorHandle = {
+  getSpritesData: () => SpriteData[];
+};
 
-    const setup = async () => {
-      if (canvasRef.current && canvasRef.current.children.length === 0) {
-        app = new PIXI.Application();
+const AnimationEditor = forwardRef<AnimationEditorHandle, AnimationEditorProps>(
+  ({ project, characters }, ref) => {
+    const canvasRef = useRef<HTMLDivElement>(null);
+    const appRef = useRef<PIXI.Application>();
+    // Use a ref to store sprites, mapping character ID to the PIXI.Sprite
+    const spritesRef = useRef<Map<string, PIXI.Sprite>>(new Map());
 
-        await app.init({
-          background: '#1a1b1c',
-          resizeTo: canvasRef.current,
-          antialias: true,
+    // Expose the getSpritesData function to the parent component
+    useImperativeHandle(ref, () => ({
+      getSpritesData: () => {
+        const data: SpriteData[] = [];
+        spritesRef.current.forEach((sprite, id) => {
+          data.push({
+            id: id,
+            x: sprite.x,
+            y: sprite.y,
+            rotation: sprite.rotation,
+          });
         });
+        return data;
+      },
+    }));
 
-        canvasRef.current.appendChild(app.view);
+    useEffect(() => {
+      const setup = async () => {
+        if (canvasRef.current && !appRef.current) {
+          const app = new PIXI.Application();
+          appRef.current = app;
+
+          await app.init({
+            background: '#1a1b1c',
+            resizeTo: canvasRef.current,
+            antialias: true,
+          });
+
+          canvasRef.current.appendChild(app.view);
+        }
+
+        const app = appRef.current;
+        if (!app) return;
+
+        // Clear old sprites before adding new ones
+        spritesRef.current.clear();
+        app.stage.removeChildren();
 
         // Load character sprites
         for (const char of characters) {
@@ -45,35 +85,24 @@ const AnimationEditor = ({ project, characters }: AnimationEditorProps) => {
             try {
               const texture = await PIXI.Assets.load(char.sprite_url);
               const sprite = new PIXI.Sprite(texture);
+              spritesRef.current.set(char.id, sprite); // Store sprite reference
 
               sprite.anchor.set(0.5);
               sprite.x = Math.random() * app.screen.width;
               sprite.y = Math.random() * app.screen.height;
 
-              // Make the sprite interactive
               sprite.eventMode = 'static';
               sprite.cursor = 'pointer';
 
-              // Drag and drop logic
               let dragging = false;
-
               sprite.on('pointerdown', () => {
                 dragging = true;
-                // Bring sprite to top
                 app.stage.toFront(sprite);
               });
-
-              sprite.on('pointerup', () => {
-                dragging = false;
-              });
-
-              sprite.on('pointerupoutside', () => {
-                dragging = false;
-              });
-
+              sprite.on('pointerup', () => dragging = false);
+              sprite.on('pointerupoutside', () => dragging = false);
               sprite.on('pointermove', (event) => {
                 if (dragging) {
-                  // Get the new position from the event
                   const newPosition = event.data.getLocalPosition(sprite.parent);
                   sprite.x = newPosition.x;
                   sprite.y = newPosition.y;
@@ -86,20 +115,21 @@ const AnimationEditor = ({ project, characters }: AnimationEditorProps) => {
             }
           }
         }
-      }
-    };
+      };
 
-    setup();
+      setup();
 
-    return () => {
-      // Cleanup logic
-      if (app) {
-        app.destroy(true, true);
-      }
-    };
-  }, [characters]); // Rerun effect if characters array changes
+      return () => {
+        if (appRef.current) {
+          appRef.current.destroy(false, true); // Keep canvas, remove textures
+          appRef.current = undefined;
+        }
+      };
+    }, [characters]);
 
-  return <div ref={canvasRef} style={{ position: 'absolute', width: '100%', height: '100%' }} />;
-};
+    return <div ref={canvasRef} style={{ position: 'absolute', width: '100%', height: '100%' }} />;
+  }
+);
 
+AnimationEditor.displayName = 'AnimationEditor';
 export default AnimationEditor;

@@ -36,3 +36,33 @@ export async function createCharacter(projectId: string, formData: FormData) {
   revalidatePath(`/editor/${projectId}`)
   return { success: true }
 }
+
+export async function saveKeyframe(
+  projectId: string,
+  elementId: string,
+  elementType: 'personagem' | 'objeto',
+  frame: number,
+  poseData: any
+) {
+  const supabase = createClient()
+
+  // RLS policy on keyframes table will ensure user owns the project.
+  const { error } = await supabase.from('keyframes').insert([
+    {
+      projeto_id: projectId,
+      elemento_id: elementId,
+      tipo: elementType,
+      tempo_frame: frame,
+      dados_pose: poseData,
+    },
+  ])
+
+  if (error) {
+    console.error('Error saving keyframe:', error)
+    return { error: error.message }
+  }
+
+  // Revalidate the page to show new keyframe data if we were displaying it
+  revalidatePath(`/editor/${projectId}`)
+  return { success: true }
+}
