@@ -37,6 +37,13 @@ export default function CharacterPanel({ projectId, characters }: CharacterPanel
             required
             style={{ width: '100%', padding: '0.5rem', background: '#333', border: '1px solid #555', color: 'white', marginBottom: '0.5rem' }}
           />
+          <input
+            name="spriteUrl"
+            type="text"
+            placeholder="URL do sprite"
+            defaultValue="https://placehold.co/100x200.png"
+            style={{ width: '100%', padding: '0.5rem', background: '#333', border: '1px solid #555', color: 'white', marginBottom: '0.5rem' }}
+          />
           <button 
             type="submit"
             style={{ width: '100%', background: 'green', color: 'white', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer' }}
