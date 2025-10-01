@@ -3,7 +3,14 @@
 import { useEffect, useRef } from 'react';
 import * as PIXI from 'pixi.js';
 
-const AnimationEditor = () => {
+// Define the type for the project prop, which will expand as we add more data
+type Project = {
+  id: string;
+  nome: string;
+  user_id: string;
+};
+
+const AnimationEditor = ({ project }: { project: Project }) => {
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,7 +29,7 @@ const AnimationEditor = () => {
 
         // Exemplo: Adiciona um texto para confirmar que o PixiJS está funcionando
         const text = new PIXI.Text({
-            text: 'Palco do Editor de Animação',
+            text: project.nome,
             style: {
                 fontFamily: 'Arial',
                 fontSize: 24,
