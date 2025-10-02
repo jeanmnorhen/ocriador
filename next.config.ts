@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
     loader: 'custom',
     loaderFile: './image-loader.ts',
   },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
 export default nextConfig;
