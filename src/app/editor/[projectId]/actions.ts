@@ -44,7 +44,7 @@ export async function saveKeyframe(
   elementId: string,
   elementType: 'personagem' | 'objeto',
   frame: number,
-  poseData: any
+  poseData: { x: number; y: number; rotation: number }
 ) {
   const supabase = createClient()
 

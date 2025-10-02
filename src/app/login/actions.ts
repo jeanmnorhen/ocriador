@@ -7,11 +7,10 @@ import { createClient } from '@/utils/supabase/server'
 export async function login(formData: FormData) {
   const supabase = createClient()
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = Object.fromEntries(formData)
+  const email = formData.get('email') as string
+  const password = formData.get('password') as string
 
-  const { error } = await supabase.auth.signInWithPassword(data as any)
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) {
     return redirect('/login?message=Could not authenticate user')
