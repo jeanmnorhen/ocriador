@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import AnimationEditor, { type AnimationEditorHandle, type SpriteData } from '@/components/AnimationEditor';
 import CharacterPanel from '@/components/CharacterPanel';
 import Timeline from '@/components/Timeline';
-import { saveKeyframe } from './actions';
+import { saveKeyframe, processScript } from './actions';
 
 // These types can be moved to a shared types file later
 type Project = {
