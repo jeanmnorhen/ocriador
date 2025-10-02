@@ -85,6 +85,7 @@ export async function processScript(projectId: string, script: string) {
     console.error("GEMINI_API_KEY is not set.");
     return { success: false, error: "A chave da API Gemini não está configurada." };
   }
+  console.log('geminiApiKey:', geminiApiKey);
   const genAI = new GoogleGenerativeAI(geminiApiKey); // Initialize Gemini
   console.log('genAI object:', genAI);
   const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // Use gemini-pro model
