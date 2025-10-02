@@ -30,8 +30,7 @@ export async function createProject(formData: FormData) {
 
   if (error) {
     console.error('Error creating project:', error)
-    // Handle error
-    return
+    redirect(`/?error=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/')

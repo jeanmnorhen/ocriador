@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { logout } from './logout/actions'
 import { createProject } from './actions'
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams?: { error: string } }) {
   const supabase = createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -41,15 +41,19 @@ export default async function Home() {
               required 
               style={{ padding: '0.5rem', background: '#333', border: '1px solid #555', color: 'white' }}
             />
-            <button 
-              formAction={createProject} 
-              style={{ background: 'green', color: 'white', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer', marginLeft: '0.5rem' }}
-            >
-              Criar Projeto
-            </button>
-          </form>
-        </div>
-
+                        <button
+                          formAction={createProject}
+                          style={{ background: 'green', color: 'white', border: 'none', padding: '0.5rem 1rem', cursor: 'pointer', marginLeft: '0.5rem' }}
+                        >
+                          Criar Projeto
+                        </button>
+                      </form>
+                      {searchParams?.error && (
+                        <p style={{ color: 'red', marginTop: '0.5rem' }}>
+                          {decodeURIComponent(searchParams.error)}
+                        </p>
+                      )}
+                    </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
           {projects && projects.length > 0 ? (
             projects.map((project) => (
