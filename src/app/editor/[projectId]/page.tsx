@@ -10,7 +10,7 @@ export default async function EditorPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const supabase = createClient()
-  const { projectId } = params
+  const { projectId } = params as { projectId: string }
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
