@@ -1,6 +1,9 @@
 import { login } from './actions'
+import type { PageProps } from 'next' // Import PageProps
 
-export default function LoginPage({ searchParams }: { searchParams: { message: string } }) {
+export default function LoginPage({
+  searchParams,
+}: PageProps<{}, { message: string }>) {
   return (
     <div>
       <form>
