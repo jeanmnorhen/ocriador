@@ -3,7 +3,7 @@ import type { PageProps } from 'next' // Import PageProps
 
 export default function LoginPage({
   searchParams,
-}: PageProps<{}, { message: string }>) {
+}: PageProps<Record<string, never>, { message: string }>) {
   return (
     <div>
       <form>
