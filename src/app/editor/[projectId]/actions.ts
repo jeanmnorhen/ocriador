@@ -86,7 +86,7 @@ export async function processScript(projectId: string, script: string) {
     return { success: false, error: "A chave da API Gemini não está configurada." };
   }
   const genAI = new GoogleGenerativeAI(geminiApiKey); // Initialize Gemini
-
+  console.log('genAI object:', genAI);
   const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // Use gemini-pro model
 
   const prompt = `Analyze the following animation script and suggest initial positions (x, y, rotation) for characters at frame 0.
