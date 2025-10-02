@@ -5,10 +5,11 @@ import EditorClient from './EditorClient' // Import the new client component
 type EditorPageProps = {
   params: {
     projectId: string
-  }
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export default async function EditorPage({ params }: EditorPageProps) {
+export default async function EditorPage({ params, searchParams }: EditorPageProps) {
   const supabase = createClient()
   const { projectId } = params
 
