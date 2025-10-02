@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+celery
+redis
+llama-cpp-python
+pydantic
+instructor
+python-dotenv
