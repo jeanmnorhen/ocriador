@@ -5,7 +5,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install build dependencies for llama-cpp-python and OpenBLAS
-RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     libopenblas-dev     && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     libopenblas-dev     pkg-config     && rm -rf /var/lib/apt/lists/*
 
 # Set environment variables for optimized compilation
 # This is the critical step from the plan
