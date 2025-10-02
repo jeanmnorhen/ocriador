@@ -2,6 +2,8 @@
 
 import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation' // Added redirect import
+import { GoogleGenerativeAI } from '@google/generative-ai'; // Added Gemini import
 
 export async function createCharacter(projectId: string, formData: FormData) {
   const supabase = createClient()
@@ -147,3 +149,4 @@ export async function processScript(projectId: string, script: string) {
     console.error("Error calling Gemini API:", error);
     return { success: false, error: "Erro ao comunicar com a API do Gemini." };
   }
+}
