@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'; // Added useEffect
+import { useState, useEffect } from 'react'; // Added useEffect1
 
 type Keyframe = {
   id: string;
