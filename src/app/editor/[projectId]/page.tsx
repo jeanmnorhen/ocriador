@@ -2,15 +2,13 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import EditorClient from './EditorClient' // Import the new client component
 
-type PageProps<P = Record<string, never>, S = Record<string, never>> = {
-  params: P;
-  searchParams: S;
-};
-
 export default async function EditorPage({
   params,
   searchParams,
-}: PageProps<{ projectId: string }>) {
+}: {
+  params: { projectId: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const supabase = createClient()
   const { projectId } = params
 
