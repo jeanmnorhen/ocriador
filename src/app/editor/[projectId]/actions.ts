@@ -79,7 +79,13 @@ export async function saveKeyframe(
 
 export async function processScript(projectId: string, script: string) {
   const supabase = createClient(); // Initialize supabase client
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!); // Initialize Gemini
+
+  const geminiApiKey = process.env.GEMINI_API_KEY;
+  if (!geminiApiKey) {
+    console.error("GEMINI_API_KEY is not set.");
+    return { success: false, error: "A chave da API Gemini não está configurada." };
+  }
+  const genAI = new GoogleGenerativeAI(geminiApiKey); // Initialize Gemini
 
   const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // Use gemini-pro model
 
@@ -102,7 +108,9 @@ export async function processScript(projectId: string, script: string) {
 
   try {
     const result = await model.generateContent(prompt);
+    console.log('Gemini API result:', result);
     const response = await result.response;
+    console.log('Gemini API response:', response);
     const text = response.text();
 
     // Attempt to parse the JSON output from Gemini
