@@ -78,6 +78,7 @@ export async function saveKeyframe(
 }
 
 export async function processScript(projectId: string, script: string) {
+  const supabase = createClient(); // Initialize supabase client
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!); // Initialize Gemini
 
   const model = genAI.getGenerativeModel({ model: "gemini-pro" }); // Use gemini-pro model
