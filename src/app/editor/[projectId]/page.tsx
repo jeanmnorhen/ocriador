@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import EditorClient from './EditorClient' // Import the new client component
 
-type PageProps<P = {}, S = {}> = {
+type PageProps<P = Record<string, never>, S = Record<string, never>> = {
   params: P;
   searchParams: S;
 };
