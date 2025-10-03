@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # Redis for Celery Broker and Backend

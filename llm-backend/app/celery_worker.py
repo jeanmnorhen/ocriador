@@ -52,8 +52,11 @@ def init_worker(**kwargs):
             n_gpu_layers=0,   # CPU only
             chat_format="llama-2" # Explicitly set chat format
         )
-        # Use the correct factory for llama-cpp-python
-        client = instructor.from_llama_cpp(llm, mode=instructor.Mode.JSON)
+        # The correct way to patch llama-cpp-python for structured output
+        client = instructor.patch(
+            create=llm.create_chat_completion,
+            mode=instructor.Mode.JSON,
+        )
         print("LLM model loaded successfully for worker.")
     except Exception as e:
         print(f"Error loading LLM model for worker: {e}")
@@ -84,8 +87,8 @@ Based on the script, generate the keyframes. If no characters are mentioned or p
     ]
     
     try:
-        # Use the modern chat completions endpoint
-        response = client.chat.completions.create(
+        # The correct way to call the patched client
+        response = client(
             messages=messages,
             response_model=KeyframeList,
             max_retries=2,
