@@ -40,4 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# python
+**/__pycache__/
+
+# LLM Models - Do not commit large model files
+/llm-backend/models/
